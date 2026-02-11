@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Hypertrophy Coach</title>
+<link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" href="./icons/icon-192.png" type="image/png">
+  <meta name="theme-color" content="#111111" />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand" role="banner">
+      <div class="dot" aria-hidden="true"></div>
+      <div>
+        <div class="title">Hypertrophy Coach</div>
+        <div class="subtitle">Rules-based • Offline • PWA</div>
+      </div>
+    </div>
+    <nav class="nav" aria-label="Primary">
+      <button class="navbtn" data-nav="home">Today</button>
+      <button class="navbtn" data-nav="library">Library</button>
+      <button class="navbtn" data-nav="progress">Progress</button>
+      <button class="navbtn" data-nav="settings">Settings</button>
+    </nav>
+  </header>
+
+  <main id="app" class="app"></main>
+
+  <nav class="bottombar" aria-label="Bottom">
+    <button class="bnavbtn" data-nav="home" aria-label="Today">Today</button>
+    <button class="bnavbtn" data-nav="workoutLast" aria-label="Last workout">Workout</button>
+    <button class="bnavbtn" data-nav="library" aria-label="Library">Library</button>
+    <button class="bnavbtn" data-nav="progress" aria-label="Progress">Progress</button>
+  </nav>
+
+  <div id="status" class="status" aria-live="polite">Loading...</div>
+  <script src="./app.js"></script>
+</body>
+</html>
