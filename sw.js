@@ -1,4 +1,4 @@
-const CACHE = "hypertrophy-coach-v4l-20260210_024902";
+const CACHE = "hypertrophy-coach-v4l-FIXED-NAV";
 const ASSETS = [
   "./",
   "./index.html",
@@ -8,6 +8,7 @@ const ASSETS = [
   "./icons/icon-192.png",
   "./icons/icon-512.png"
 ];
+
 self.addEventListener("install", (event) => {
   event.waitUntil((async () => {
     const cache = await caches.open(CACHE);
@@ -15,6 +16,7 @@ self.addEventListener("install", (event) => {
     self.skipWaiting();
   })());
 });
+
 self.addEventListener("activate", (event) => {
   event.waitUntil((async () => {
     const keys = await caches.keys();
@@ -26,6 +28,7 @@ self.addEventListener("activate", (event) => {
 self.addEventListener('fetch', (event) => {
   const req = event.request;
   const url = req.url || "";
+  
   if (req.method !== 'GET') return;
   if (!(url.startsWith('https://') || url.startsWith('http://'))) return;
   if (!url.startsWith(self.location.origin)) return;
@@ -34,6 +37,7 @@ self.addEventListener('fetch', (event) => {
     const cache = await caches.open(CACHE);
     const cached = await cache.match(req);
     if (cached) return cached;
+    
     try {
       const resp = await fetch(req);
       if (resp && resp.ok && resp.type === 'basic') {
@@ -41,8 +45,7 @@ self.addEventListener('fetch', (event) => {
       }
       return resp;
     } catch (e) {
-      return new Response("Offline", { status: 503, statusText: "Offline" });
+      return cached || new Response("Offline", { status: 503, statusText: "Offline" });
     }
   })());
 });
-
