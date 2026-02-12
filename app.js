@@ -1,5 +1,5 @@
-// BUILD: Blacksmith-v2-STABLE-DELEGATION
-window.__BUILD_ID="Blacksmith-v2-STABLE-DELEGATION";
+// BUILD: Blacksmith-v3-CLOSEST-FIX
+window.__BUILD_ID="Blacksmith-v3-CLOSEST-FIX";
 
 // --- UTILS ---
 function escapeHtml(str){ return String(str||"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#39;"); }
@@ -214,13 +214,10 @@ function exerciseCard(slot,ui){
 function viewWorkout(dayId){
   const day=dayById(dayId); 
   const slots=slotsForDay(dayId);
-  // Init UI state if missing
   const ui=window.__workoutUI||(window.__workoutUI={readiness:{sleep:3,energy:3,soreness:3,stress:3},started:false,setDrafts:{},warmups:{},skips:{}});
   
-  // Ensure drafts exist
   slots.forEach(s=>{ 
     if(!ui.setDrafts[s.id]) {
-      // Default to suggested load
       ui.setDrafts[s.id]={sets:Array.from({length:s.sets}).map(()=>({weight:s.suggestedLoad,reps:s.repTarget,rir:s.targetRir,done:false}))}; 
     }
   });
@@ -245,42 +242,38 @@ function render(){
 function navigate(name,params={}){ route={name,params}; render(); }
 function lastWorkedDayId(){ const s=[...state.sessions].sort((a,b)=>b.startedAt-a.startedAt)[0]; return s?.dayId||state.days[0]?.id; }
 
-// --- GLOBAL EVENT DELEGATION (The Fix) ---
+// --- GLOBAL EVENT DELEGATION (CRITICAL FIX) ---
+// We use .closest() to ensure clicking <b>Text</b> inside a <button> still works
 document.addEventListener("click", e => {
-  const ds = e.target.dataset;
-  const parent = e.target.parentElement?.dataset; // Check parent for delegation if needed
-  
-  // 1. Check direct data attributes on the clicked element
-  if(ds.action) { e.preventDefault(); handleAction(ds.action, ds); return; }
+  const btn = e.target.closest("button");
+  if(!btn) return;
+  const ds = btn.dataset;
+
+  // 1. Navigation
   if(ds.navto) { e.preventDefault(); navigate(ds.navto); return; }
   if(ds.start) { e.preventDefault(); navigate("workout", {dayId: ds.start}); return; }
   if(ds.editDay) { e.preventDefault(); navigate("workout", {dayId: ds.editDay}); return; }
+  
+  // 2. Actions
+  if(ds.action) { e.preventDefault(); handleAction(ds.action, ds); return; }
 
-  // 2. Workout Session Logic (Mark Done, Add Set, Delete Set)
+  // 3. Workout Logic
   const ui = window.__workoutUI;
   if(ui) {
     if(ds.markdone) { ui.setDrafts[ds.markdone].sets[ds.idx].done = !ui.setDrafts[ds.markdone].sets[ds.idx].done; render(); return; }
     if(ds.addset) { ui.setDrafts[ds.addset].sets.push({weight:"",reps:"",rir:"",done:false}); render(); return; }
     if(ds.delSetRow) { ui.setDrafts[ds.delSetRow].sets.splice(ds.idx, 1); render(); return; }
-    
-    // Skip Logic
     if(ds.openSkip) { ui.skipModalFor = ds.openSkip; render(); return; }
     if(ds.confirmSkip) { ui.skips[ds.confirmSkip] = {reason: ds.reason}; ui.skipModalFor = null; render(); return; }
     if(ds.undoSkip) { delete ui.skips[ds.undoSkip]; render(); return; }
+    if(ds.saveSlotDefault) { handleAction("save-slot-default", ds); return; }
   }
 
-  // 3. Deletion Logic
-  if(ds.delEx) { 
-    if(confirm("Delete this custom exercise?")) { state.exercises = state.exercises.filter(x=>x.id!==ds.delEx); saveState(state); render(); }
-    return;
-  }
-  if(ds.delDay) {
-    if(confirm("Delete this workout template?")) { state.days = state.days.filter(x=>x.id!==ds.delDay); state.slots=state.slots.filter(s=>s.dayId!==ds.delDay); saveState(state); render(); }
-    return;
-  }
+  // 4. Deletion
+  if(ds.delEx) { if(confirm("Delete custom exercise?")) { state.exercises = state.exercises.filter(x=>x.id!==ds.delEx); saveState(state); render(); } return; }
+  if(ds.delDay) { if(confirm("Delete workout?")) { state.days = state.days.filter(x=>x.id!==ds.delDay); state.slots=state.slots.filter(s=>s.dayId!==ds.delDay); saveState(state); render(); } return; }
 });
 
-// Input Delegation (For typing in weight/reps)
 document.addEventListener("input", e => {
   const ds = e.target.dataset;
   const ui = window.__workoutUI;
@@ -306,31 +299,17 @@ function handleAction(action, data){
   if(action==="start-session"){ const ui=window.__workoutUI; ui.started=true; ui.startedAt=Date.now(); render(); }
   
   if(action==="finish-adjust"){
-    const ui=window.__workoutUI; 
-    const dayId=route.params.dayId; 
-    const logs=[];
-    
+    const ui=window.__workoutUI; const dayId=route.params.dayId; const logs=[];
     Object.keys(ui.setDrafts).forEach(sid=>{
       if(ui.skips[sid]) return;
-      ui.setDrafts[sid].sets.forEach((s,i)=>{ 
-        if(s.done) logs.push({slotId:sid,setIndex:i+1,weight:Number(s.weight),reps:Number(s.reps),achievedRir:Number(s.rir)}); 
-      });
+      ui.setDrafts[sid].sets.forEach((s,i)=>{ if(s.done) logs.push({slotId:sid,setIndex:i+1,weight:Number(s.weight),reps:Number(s.reps),achievedRir:Number(s.rir)}); });
     });
-
     state.sessions.push({id:uid("sess"),date:nowISODate(),dayId,logs});
-    
-    // Auto-adjust weights
     const updated = slotsForDay(dayId).map(s=>nextSlotFromLogs(s, logs.filter(l=>l.slotId===s.id), false, state.settings));
-    const map=new Map(updated.map(s=>[s.id,s])); 
-    state.slots=state.slots.map(s=>map.get(s.id)||s);
-    
-    saveState(state); 
-    makeAutoBackup("auto");
-    window.__workoutUI=null; 
-    navigate("home");
+    const map=new Map(updated.map(s=>[s.id,s])); state.slots=state.slots.map(s=>map.get(s.id)||s);
+    saveState(state); makeAutoBackup("auto"); window.__workoutUI=null; navigate("home");
   }
   
-  // Skipping Session
   if(action==="open-skip-session"){ window.__workoutUI.showSkipSessionModal = true; render(); }
   if(action==="close-skip-session"){ window.__workoutUI.showSkipSessionModal = false; render(); }
   if(action==="do-skip-session"){
@@ -342,10 +321,7 @@ function handleAction(action, data){
   if(action==="export-csv"){ exportHistoryCSV(); }
   if(action==="export-json"){ const blob=new Blob([JSON.stringify(state,null,2)],{type:"application/json"}); const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=`blacksmith-backup-${nowISODate()}.json`; a.click(); }
   if(action==="toggle-add-day"){ window.__settingsUI=(window.__settingsUI||{}); window.__settingsUI.addDayOpen=!window.__settingsUI.addDayOpen; render(); }
-  if(action==="confirm-add-day"){ 
-    const name=document.getElementById("newDayName").value;
-    if(name) { state.days.push({id:uid("d"),name,index:state.days.length}); saveState(state); render(); }
-  }
+  if(action==="confirm-add-day"){ const name=document.getElementById("newDayName").value; if(name) { state.days.push({id:uid("d"),name,index:state.days.length}); saveState(state); render(); } }
   if(action==="reset-all"){ if(confirm("Wipe all data?")) { state=seedState(); saveState(state); navigate("home"); } }
 }
 
