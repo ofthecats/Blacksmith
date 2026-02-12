@@ -1,6 +1,6 @@
 {
-  "name": "Hypertrophy Coach",
-  "short_name": "Hypertrophy",
+  "name": "Blacksmith",
+  "short_name": "Resistance",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#0f0f12",
