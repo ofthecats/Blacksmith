@@ -1,5 +1,16 @@
-// BUILD: Blacksmith-v7-COLLAPSIBLE-FIX
-window.__BUILD_ID="v7.0";
+// BUILD: Blacksmith-v8-SAFE-MODE
+window.__BUILD_ID="v8.0";
+
+// --- ERROR HANDLING (Prevents "Loading..." freeze) ---
+window.onerror = function(msg, source, lineno, colno, error) {
+  const status = document.getElementById("status");
+  if(status) {
+    status.style.display = "block";
+    status.style.background = "#ff5c7a";
+    status.style.color = "#fff";
+    status.textContent = `CRASH: ${msg}`;
+  }
+};
 
 // --- UTILS ---
 function escapeHtml(str){ return String(str||"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#39;"); }
@@ -8,7 +19,14 @@ function clamp(n, a, b) { return Math.max(a, Math.min(b, n)); }
 function roundToIncrement(value, inc) { const rounded = Math.round(value / inc) * inc; return Math.round(rounded * 100) / 100; }
 function fmt(n) { const x = Number(n); if (Number.isNaN(x)) return ""; return (Math.round(x * 100) / 100).toString(); }
 function nowISODate(){ const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; }
-function setStatus(msg){ const el=document.getElementById("status"); if(el) el.textContent = msg; }
+function setStatus(msg){ 
+  const el=document.getElementById("status"); 
+  if(el) {
+    el.textContent = msg;
+    el.style.display = msg ? "block" : "none"; // Hide if empty
+    if(msg) setTimeout(() => { el.style.display = "none"; }, 3000);
+  }
+}
 
 // --- STATE MANAGEMENT ---
 const KEY = "hc_v4_state";
@@ -38,46 +56,41 @@ function makeAutoBackup(reason="auto"){
   }catch{ return false; }
 }
 
-// --- DOM & RENDER ---
+// --- DOM ---
 const $app = document.getElementById("app");
 let state = loadState() || seedState(); saveState(state);
 let route = {name:"home",params:{}};
 
-// --- CORE DATA SEEDING ---
+// --- DATA ---
 const MUSCLES = ["CHEST","BACK","DELTS","BICEPS","TRICEPS","QUADS","HAMSTRINGS","GLUTES","CALVES","ABS","TRAPS","FOREARMS","CORE"];
 const SKIP_REASONS = ["Fatigue", "Pain/Injury", "Time/Scheduling", "Equipment Busy", "Other"];
 
 function seedExercises(){
   const E=[];
   const add=(id,name,muscles,compound,equipment,custom=false)=>E.push({id,name,muscles,compound,equipment,custom});
-  // CHEST
   add("ex_bb_bench","Bench Press (Barbell)",["CHEST","TRICEPS","DELTS"],true,"barbell");
   add("ex_bb_incline_bench","Incline Bench Press (Barbell)",["CHEST","TRICEPS","DELTS"],true,"barbell");
   add("ex_db_bench","Bench Press (Dumbbell)",["CHEST","TRICEPS","DELTS"],true,"dumbbell");
   add("ex_db_incline_press","Incline Dumbbell Press",["CHEST","TRICEPS","DELTS"],true,"dumbbell");
   add("ex_pec_deck","Pec Deck",["CHEST"],false,"machine");
   add("ex_dips","Dips (Assisted/Bodyweight)",["CHEST","TRICEPS"],true,"bodyweight");
-  // BACK
   add("ex_pullup","Pull-up",["BACK","BICEPS"],true,"bodyweight");
   add("ex_lat_pulldown","Lat Pulldown",["BACK","BICEPS"],true,"cable");
   add("ex_bb_row","Bent-Over Row (Barbell)",["BACK","BICEPS","TRAPS"],true,"barbell");
   add("ex_db_row","One-Arm Row (Dumbbell)",["BACK","BICEPS"],true,"dumbbell");
   add("ex_cable_row","Seated Cable Row",["BACK","BICEPS"],true,"cable");
   add("ex_facepull","Face Pull",["DELTS","TRAPS","BACK"],false,"cable");
-  // SHOULDERS
   add("ex_ohp_bb","Overhead Press (Barbell)",["DELTS","TRICEPS"],true,"barbell");
   add("ex_ohp_db","Overhead Press (Dumbbell)",["DELTS","TRICEPS"],true,"dumbbell");
   add("ex_lateral_raise","Lateral Raise (Dumbbell)",["DELTS"],false,"dumbbell");
   add("ex_cable_lateral","Cable Lateral Raise",["DELTS"],false,"cable");
   add("ex_rear_delt_fly","Rear Delt Fly (Machine)",["DELTS"],false,"machine");
-  // ARMS
   add("ex_pressdown","Triceps Pressdown",["TRICEPS"],false,"cable");
   add("ex_oh_tri","Overhead Triceps Ext (Cable)",["TRICEPS"],false,"cable");
   add("ex_skullcrusher","Skullcrusher",["TRICEPS"],false,"barbell");
   add("ex_ez_curl","EZ-Bar Curl",["BICEPS"],false,"barbell");
   add("ex_db_curl","Dumbbell Curl",["BICEPS"],false,"dumbbell");
   add("ex_hammer_curl","Hammer Curl",["BICEPS","FOREARMS"],false,"dumbbell");
-  // LEGS
   add("ex_back_squat","Back Squat (Barbell)",["QUADS","GLUTES"],true,"barbell");
   add("ex_leg_press","Leg Press",["QUADS","GLUTES"],true,"machine");
   add("ex_leg_ext","Leg Extension",["QUADS"],false,"machine");
@@ -86,7 +99,6 @@ function seedExercises(){
   add("ex_leg_curl_lying","Leg Curl (Lying)",["HAMSTRINGS"],false,"machine");
   add("ex_calf_standing","Calf Raise (Standing)",["CALVES"],false,"machine");
   add("ex_calf_seated","Calf Raise (Seated)",["CALVES"],false,"machine");
-  // ABS
   add("ex_cable_crunch","Cable Crunch",["ABS"],false,"cable");
   add("ex_plank","Plank",["ABS","CORE"],true,"bodyweight");
   return E;
@@ -96,14 +108,11 @@ function seedState(){
   const exercises = seedExercises();
   const days=[{id:"day_upper",name:"Upper Body",index:0}];
   const slot=(dayId,order,exId,sets,repMin,repMax,targetRir,suggestedLoad)=>({id:uid("slot"),dayId,order,exId,sets,repMin,repMax,targetRir,repTarget:repMin,suggestedLoad});
-  const slots=[
-    slot("day_upper",0,"ex_db_incline_press",3,8,12,2,50),
-    slot("day_upper",1,"ex_lat_pulldown",3,10,15,2,120)
-  ];
+  const slots=[slot("day_upper",0,"ex_db_incline_press",3,8,12,2,50)];
   return { meta:{version:4,createdAt:Date.now()}, settings:{daysPerWeek:4,loadIncrement:2.5,autoFillFromSuggestion:true,backupFreqHours:24,backupKeep:14}, exercises, days, slots, sessions:[] };
 }
 
-// --- LOGIC HELPER ---
+// --- LOGIC ---
 function exById(id){ return state.exercises.find(e=>e.id===id) || {id, name:"Unknown", muscles:[]}; }
 function dayById(id){ return state.days.find(d=>d.id===id); }
 function slotsForDay(dayId){ return state.slots.filter(s=>s.dayId===dayId).sort((a,b)=>a.order-b.order); }
@@ -153,8 +162,7 @@ function exportHistoryCSV() {
   a.click();
 }
 
-
-// --- VIEW FUNCTIONS ---
+// --- VIEWS ---
 function html(strings,...vals){ return strings.map((s,i)=>s+(vals[i]??"")).join(""); }
 
 function viewHome(){
@@ -239,16 +247,19 @@ function exerciseCard(slot,ui){
   const ex=exById(slot.exId); 
   const draft=ui.setDrafts[slot.id]; 
   const isSkipped = ui.skips[slot.id];
-  const isCollapsed = ui.collapsed[slot.id]; // Get collapse state
+  const isCollapsed = ui.collapsed[slot.id];
 
-  return html`<div class="exerciseCard ${isCollapsed ? 'collapsed' : ''}" style="margin-bottom:12px; border:${isSkipped?'1px solid var(--warn)':'1px solid var(--line)'}">
-    <div class="spread exHeader" data-toggle="${slot.id}">
+  return html`<div class="exerciseCard" style="margin-bottom:12px; border:${isSkipped?'1px solid var(--warn)':'1px solid var(--line)'}">
+    <div class="spread exHeader" data-toggle="${slot.id}" style="cursor:pointer; padding-bottom:8px">
       <div>
-        <span class="chev">▾</span> <b>${escapeHtml(ex.name)}</b> ${isSkipped?'(SKIPPED)':''}
+        <span class="chev" style="display:inline-block; transform: ${isCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)'}">▼</span> 
+        <b>${escapeHtml(ex.name)}</b> 
+        ${isSkipped?'(SKIPPED)':''}
       </div>
       <div class="row"><span class="badge">${slot.sets}×${slot.repTarget}</span><span class="badge accent">Rec: ${fmt(slot.suggestedLoad)}</span></div>
     </div>
-    <div class="exBody" style="${isCollapsed ? 'display:none' : ''}">
+    <div class="exBody" style="${isCollapsed ? 'display:none' : 'display:block'}">
+      <hr style="opacity:0.3; margin: 8px 0" />
       ${isSkipped ? `<button class="btn" data-undo-skip="${slot.id}">Undo Skip</button>` : `
       <div class="row" style="margin-top:10px">
         <button class="btn secondary" data-addset="${slot.id}">Add Set</button>
@@ -298,7 +309,7 @@ function viewWorkout(dayId){
         </div>
       </div>
     ` : ""}
-    ${slots.length === 0 ? `<div style="padding:20px; text-align:center; opacity:0.6;">No exercises yet. Click "Add Exercise" to build this workout.</div>` : ""}
+    ${slots.length === 0 ? `<div style="padding:40px 20px; text-align:center; opacity:0.6; border: 1px dashed var(--line); margin-top:20px; border-radius:12px;">No exercises here yet.<br><br>Click <b>Add Exercise</b> above to start building.</div>` : ""}
     ${slots.map(s=>exerciseCard(s,ui)).join("")}
   </div>
   ${ui.showSkipSessionModal ? `<div class="modal"><div class="h2">Skip Session Reason</div>${SKIP_REASONS.map(r=>`<button class="btn secondary" data-action="do-skip-session" data-reason="${r}">${r}</button>`).join("")}<button class="btn" data-action="close-skip-session" style="margin-top:10px">Cancel</button></div>`:""}`;
@@ -306,43 +317,42 @@ function viewWorkout(dayId){
 
 // --- RENDER & ROUTER ---
 function render(){
-  const r = route.name;
-  let v = viewHome();
-  if(r==="workout") v = viewWorkout(route.params.dayId);
-  else if(r==="workoutLast") v = viewWorkout(lastWorkedDayId());
-  else if(r==="library") v = viewLibrary();
-  else if(r==="progress") v = viewProgress();
-  else if(r==="settings") v = viewSettings();
-  $app.innerHTML = v;
+  try {
+    setStatus(""); // Clear loading text
+    const r = route.name;
+    let v = viewHome();
+    if(r==="workout") v = viewWorkout(route.params.dayId);
+    else if(r==="workoutLast") v = viewWorkout(lastWorkedDayId());
+    else if(r==="library") v = viewLibrary();
+    else if(r==="progress") v = viewProgress();
+    else if(r==="settings") v = viewSettings();
+    $app.innerHTML = v;
 
-  document.querySelectorAll(".bnavbtn").forEach(b => {
-    b.classList.toggle("active", b.dataset.nav === r || (b.dataset.nav === "workoutLast" && r === "workout"));
-    b.onclick = (e) => {
-      e.preventDefault(); e.stopPropagation();
-      const n = b.dataset.nav;
-      if(n === "workoutLast") navigate("workoutLast");
-      else navigate(n);
-    };
-  });
+    document.querySelectorAll(".bnavbtn").forEach(b => {
+      b.classList.toggle("active", b.dataset.nav === r || (b.dataset.nav === "workoutLast" && r === "workout"));
+      b.onclick = (e) => { e.preventDefault(); e.stopPropagation(); const n = b.dataset.nav; if(n === "workoutLast") navigate("workoutLast"); else navigate(n); };
+    });
+  } catch (err) {
+    setStatus("RENDER ERROR: " + err.message);
+    console.error(err);
+  }
 }
 
 function navigate(name,params={}){ route={name,params}; render(); }
 function lastWorkedDayId(){ const s=[...state.sessions].sort((a,b)=>b.startedAt-a.startedAt)[0]; return s?.dayId||state.days[0]?.id; }
 
-// --- GLOBAL EVENT DELEGATION ---
+// --- DELEGATION ---
 document.addEventListener("click", e => {
-  // Handle Toggle Header (Divs, not buttons)
+  // 1. Toggle Header
   const toggle = e.target.closest("[data-toggle]");
   if(toggle) {
     const id = toggle.dataset.toggle;
     const ui = window.__workoutUI;
-    if(ui) {
-      ui.collapsed[id] = !ui.collapsed[id];
-      render();
-    }
+    if(ui) { ui.collapsed[id] = !ui.collapsed[id]; render(); }
     return;
   }
 
+  // 2. Buttons
   const btn = e.target.closest("button");
   if(!btn) return;
   const ds = btn.dataset;
