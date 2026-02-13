@@ -1,5 +1,5 @@
-// BUILD: Blacksmith-v4-NAV-FIX
-window.__BUILD_ID="Blacksmith-v4-NAV-FIX";
+// BUILD: Blacksmith-v5-FINAL-FIX
+window.__BUILD_ID="v5.0";
 
 // --- UTILS ---
 function escapeHtml(str){ return String(str||"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#39;"); }
@@ -120,7 +120,7 @@ function exportHistoryCSV() {
 function html(strings,...vals){ return strings.map((s,i)=>s+(vals[i]??"")).join(""); }
 
 function viewHome(){
-  return html`<div class="h1">Blacksmith</div>
+  return html`<div class="h1">Blacksmith <span style="font-size:12px;opacity:0.5;font-weight:normal">${window.__BUILD_ID}</span></div>
   <div class="grid two">
     <div class="card">
       <div class="h2">Templates</div>
@@ -250,19 +250,27 @@ function render(){
   // Active state for bottom nav
   document.querySelectorAll(".bnavbtn").forEach(b => {
     b.classList.toggle("active", b.dataset.nav === r || (b.dataset.nav === "workoutLast" && r === "workout"));
+    // FORCE ATTACH CLICK (Brute force fix for bottom buttons)
+    b.onclick = (e) => {
+      e.preventDefault(); 
+      e.stopPropagation();
+      const n = b.dataset.nav;
+      if(n === "workoutLast") navigate("workoutLast");
+      else navigate(n);
+    };
   });
 }
 
 function navigate(name,params={}){ route={name,params}; render(); }
 function lastWorkedDayId(){ const s=[...state.sessions].sort((a,b)=>b.startedAt-a.startedAt)[0]; return s?.dayId||state.days[0]?.id; }
 
-// --- GLOBAL EVENT DELEGATION (CRITICAL FIX) ---
+// --- GLOBAL EVENT DELEGATION ---
 document.addEventListener("click", e => {
   const btn = e.target.closest("button");
   if(!btn) return;
   const ds = btn.dataset;
 
-  // 1. Navigation (Handles BOTH data-nav and data-navto)
+  // 1. Navigation (Top nav & other buttons)
   if(ds.nav) { e.preventDefault(); if(ds.nav==="workoutLast") navigate("workoutLast"); else navigate(ds.nav); return; }
   if(ds.navto) { e.preventDefault(); if(ds.navto==="workoutLast") navigate("workoutLast"); else navigate(ds.navto); return; }
   if(ds.start) { e.preventDefault(); navigate("workout", {dayId: ds.start}); return; }
