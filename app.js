@@ -1,5 +1,5 @@
-// BUILD: Blacksmith-v5.1-FULL-LIB
-window.__BUILD_ID="v5.1";
+// BUILD: Blacksmith-v6-ADD-EX-RESTORED
+window.__BUILD_ID="v6.0";
 
 // --- UTILS ---
 function escapeHtml(str){ return String(str||"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#39;"); }
@@ -298,7 +298,7 @@ function exerciseCard(slot,ui){
 function viewWorkout(dayId){
   const day=dayById(dayId); 
   const slots=slotsForDay(dayId);
-  const ui=window.__workoutUI||(window.__workoutUI={readiness:{sleep:3,energy:3,soreness:3,stress:3},started:false,setDrafts:{},warmups:{},skips:{}});
+  const ui=window.__workoutUI||(window.__workoutUI={readiness:{sleep:3,energy:3,soreness:3,stress:3},started:false,setDrafts:{},warmups:{},skips:{},__showAdd:false});
   
   slots.forEach(s=>{ 
     if(!ui.setDrafts[s.id]) {
@@ -306,10 +306,34 @@ function viewWorkout(dayId){
     }
   });
 
+  const exOptions = state.exercises.slice().sort((a,b)=>a.name.localeCompare(b.name));
   const timerStr = ui.startedAt ? "Running" : "—";
+  
   return html`<div class="spread"><div><div class="h1">${day?day.name:"Workout"}</div><div class="pill">Time <b id="sessionTimer">${timerStr}</b></div></div><button class="btn" data-action="start-session">${ui.started?'Started':'Start Session'}</button></div>
   <div class="grid two"><div class="card"><label>Energy Level</label><input type="range" min="1" max="5" value="${ui.readiness.energy}" oninput="window.__workoutUI.readiness.energy=Number(this.value)"></div><div class="card"><button class="btn" data-action="finish-adjust">Finish & Adjust</button><button class="btn warn" data-action="open-skip-session">Skip Session</button></div></div>
-  <div class="card">${slots.map(s=>exerciseCard(s,ui)).join("")}</div>
+  <div class="card">
+    <div class="spread">
+       <div class="h2">Exercises</div>
+       <button class="btn ok" data-action="toggle-add-ex">Add Exercise</button>
+    </div>
+    ${ui.__showAdd ? `
+      <div class="card" style="border:1px solid var(--accent); margin-top:10px; margin-bottom:15px; padding:10px;">
+        <label>Select Exercise</label>
+        <select class="input" id="addExId" style="margin-bottom:10px">
+          ${exOptions.map(e=>`<option value="${e.id}">${escapeHtml(e.name)}</option>`).join("")}
+        </select>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;">
+          <div><label>Sets</label><input type="number" class="input" id="addSets" value="3"></div>
+          <div><label>RIR</label><input type="number" class="input" id="addRir" value="2"></div>
+        </div>
+        <div class="row">
+          <button class="btn ok" data-action="confirm-add-ex">Add to Workout</button>
+          <button class="btn secondary" data-action="toggle-add-ex">Cancel</button>
+        </div>
+      </div>
+    ` : ""}
+    ${slots.map(s=>exerciseCard(s,ui)).join("")}
+  </div>
   ${ui.showSkipSessionModal ? `<div class="modal"><div class="h2">Skip Session Reason</div>${SKIP_REASONS.map(r=>`<button class="btn secondary" data-action="do-skip-session" data-reason="${r}">${r}</button>`).join("")}<button class="btn" data-action="close-skip-session" style="margin-top:10px">Cancel</button></div>`:""}`;
 }
 
@@ -318,6 +342,7 @@ function render(){
   const r = route.name;
   let v = viewHome();
   if(r==="workout") v = viewWorkout(route.params.dayId);
+  else if(r==="workoutLast") v = viewWorkout(lastWorkedDayId()); // FIX: Route resume logic properly
   else if(r==="library") v = viewLibrary();
   else if(r==="progress") v = viewProgress();
   else if(r==="settings") v = viewSettings();
@@ -345,7 +370,7 @@ document.addEventListener("click", e => {
   if(!btn) return;
   const ds = btn.dataset;
 
-  // 1. Navigation (Top nav only, bottom is handled in render)
+  // 1. Navigation
   if(ds.navto) { e.preventDefault(); if(ds.navto==="workoutLast") navigate("workoutLast"); else navigate(ds.navto); return; }
   if(ds.start) { e.preventDefault(); navigate("workout", {dayId: ds.start}); return; }
   if(ds.editDay) { e.preventDefault(); navigate("workout", {dayId: ds.editDay}); return; }
@@ -394,6 +419,21 @@ function handleAction(action, data){
   }
   if(action==="start-session"){ const ui=window.__workoutUI; ui.started=true; ui.startedAt=Date.now(); render(); }
   
+  if(action==="toggle-add-ex"){ const ui=window.__workoutUI; ui.__showAdd=!ui.__showAdd; render(); }
+  if(action==="confirm-add-ex"){
+    const dayId = (route.name==="workoutLast") ? lastWorkedDayId() : route.params.dayId;
+    const exId = document.getElementById("addExId").value;
+    const sets = Number(document.getElementById("addSets").value) || 3;
+    const rir = Number(document.getElementById("addRir").value) || 2;
+    const existing = state.slots.filter(s=>s.dayId===dayId);
+    const order = existing.length ? Math.max(...existing.map(s=>s.order))+1 : 0;
+    
+    state.slots.push({id:uid("slot"), dayId, order, exId, sets, repMin:8, repMax:12, targetRir:rir, repTarget:8, suggestedLoad:0});
+    saveState(state);
+    window.__workoutUI.__showAdd = false;
+    render();
+  }
+
   if(action==="finish-adjust"){
     const ui=window.__workoutUI; const dayId=route.params.dayId; const logs=[];
     Object.keys(ui.setDrafts).forEach(sid=>{
