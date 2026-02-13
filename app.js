@@ -1,5 +1,5 @@
-// BUILD: Blacksmith-v5-FINAL-FIX
-window.__BUILD_ID="v5.0";
+// BUILD: Blacksmith-v5.1-FULL-LIB
+window.__BUILD_ID="v5.1";
 
 // --- UTILS ---
 function escapeHtml(str){ return String(str||"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#39;"); }
@@ -50,18 +50,94 @@ const SKIP_REASONS = ["Fatigue", "Pain/Injury", "Time/Scheduling", "Equipment Bu
 function seedExercises(){
   const E=[];
   const add=(id,name,muscles,compound,equipment,custom=false)=>E.push({id,name,muscles,compound,equipment,custom});
+  
+  // CHEST
   add("ex_bb_bench","Bench Press (Barbell)",["CHEST","TRICEPS","DELTS"],true,"barbell");
+  add("ex_bb_incline_bench","Incline Bench Press (Barbell)",["CHEST","TRICEPS","DELTS"],true,"barbell");
+  add("ex_bb_decline_bench","Decline Bench Press (Barbell)",["CHEST","TRICEPS","DELTS"],true,"barbell");
+  add("ex_db_bench","Bench Press (Dumbbell)",["CHEST","TRICEPS","DELTS"],true,"dumbbell");
+  add("ex_db_incline_press","Incline Dumbbell Press",["CHEST","TRICEPS","DELTS"],true,"dumbbell");
+  add("ex_machine_chest_press","Chest Press (Machine)",["CHEST","TRICEPS"],true,"machine");
+  add("ex_machine_incline_press","Incline Press (Machine)",["CHEST","TRICEPS"],true,"machine");
+  add("ex_db_fly","Dumbbell Fly",["CHEST"],false,"dumbbell");
+  add("ex_cable_fly","Cable Fly",["CHEST"],false,"cable");
+  add("ex_pec_deck","Pec Deck",["CHEST"],false,"machine");
+  add("ex_pushup","Push-up",["CHEST","TRICEPS","DELTS"],true,"bodyweight");
+  add("ex_dips","Dips (Assisted/Bodyweight)",["CHEST","TRICEPS"],true,"bodyweight");
+
+  // BACK
+  add("ex_pullup","Pull-up",["BACK","BICEPS"],true,"bodyweight");
+  add("ex_chinup","Chin-up",["BACK","BICEPS"],true,"bodyweight");
   add("ex_lat_pulldown","Lat Pulldown",["BACK","BICEPS"],true,"cable");
+  add("ex_neutral_pulldown","Pulldown (Neutral Grip)",["BACK","BICEPS"],true,"cable");
+  add("ex_bb_row","Bent-Over Row (Barbell)",["BACK","BICEPS","TRAPS"],true,"barbell");
+  add("ex_db_row","One-Arm Row (Dumbbell)",["BACK","BICEPS"],true,"dumbbell");
+  add("ex_cable_row","Seated Cable Row",["BACK","BICEPS"],true,"cable");
+  add("ex_machine_row","Row (Machine)",["BACK","BICEPS"],true,"machine");
+  add("ex_tbar_row","T-Bar Row",["BACK","BICEPS","TRAPS"],true,"machine");
+  add("ex_facepull","Face Pull",["DELTS","TRAPS","BACK"],false,"cable");
+  add("ex_shrug_db","Shrug (DB)",["TRAPS"],false,"dumbbell");
+
+  // SHOULDERS
+  add("ex_ohp_bb","Overhead Press (Barbell)",["DELTS","TRICEPS"],true,"barbell");
+  add("ex_ohp_db","Overhead Press (Dumbbell)",["DELTS","TRICEPS"],true,"dumbbell");
+  add("ex_machine_shoulder_press","Shoulder Press (Machine)",["DELTS","TRICEPS"],true,"machine");
+  add("ex_lateral_raise","Lateral Raise (Dumbbell)",["DELTS"],false,"dumbbell");
+  add("ex_cable_lateral","Cable Lateral Raise",["DELTS"],false,"cable");
+  add("ex_rear_delt_fly","Rear Delt Fly (Machine)",["DELTS"],false,"machine");
+  add("ex_rear_delt_db","Rear Delt Fly (Dumbbell)",["DELTS"],false,"dumbbell");
+
+  // ARMS
+  add("ex_pressdown","Triceps Pressdown",["TRICEPS"],false,"cable");
+  add("ex_oh_tri","Overhead Triceps Ext (Cable)",["TRICEPS"],false,"cable");
+  add("ex_skullcrusher","Skullcrusher",["TRICEPS"],false,"barbell");
+  add("ex_close_grip_bench","Close-Grip Bench Press",["TRICEPS","CHEST"],true,"barbell");
+  add("ex_ez_curl","EZ-Bar Curl",["BICEPS"],false,"barbell");
+  add("ex_db_curl","Dumbbell Curl",["BICEPS"],false,"dumbbell");
+  add("ex_hammer_curl","Hammer Curl",["BICEPS","FOREARMS"],false,"dumbbell");
+  add("ex_cable_curl","Cable Curl",["BICEPS"],false,"cable");
+  add("ex_preacher_curl","Preacher Curl",["BICEPS"],false,"machine");
+
+  // LEGS
+  add("ex_back_squat","Back Squat (Barbell)",["QUADS","GLUTES"],true,"barbell");
+  add("ex_front_squat","Front Squat (Barbell)",["QUADS","GLUTES"],true,"barbell");
+  add("ex_hack_squat","Hack Squat",["QUADS","GLUTES"],true,"machine");
   add("ex_leg_press","Leg Press",["QUADS","GLUTES"],true,"machine");
-  add("ex_db_shoulder","Shoulder Press (DB)",["DELTS","TRICEPS"],true,"dumbbell");
+  add("ex_split_squat","Split Squat",["QUADS","GLUTES"],true,"dumbbell");
+  add("ex_lunge","Walking Lunge",["QUADS","GLUTES"],true,"dumbbell");
+  add("ex_leg_ext","Leg Extension",["QUADS"],false,"machine");
+  add("ex_rdl","Romanian Deadlift (BB)",["HAMSTRINGS","GLUTES"],true,"barbell");
+  add("ex_deadlift","Deadlift (Conventional)",["HAMSTRINGS","GLUTES","BACK"],true,"barbell");
+  add("ex_leg_curl_seated","Leg Curl (Seated)",["HAMSTRINGS"],false,"machine");
+  add("ex_leg_curl_lying","Leg Curl (Lying)",["HAMSTRINGS"],false,"machine");
+  add("ex_calf_standing","Calf Raise (Standing)",["CALVES"],false,"machine");
+  add("ex_calf_seated","Calf Raise (Seated)",["CALVES"],false,"machine");
+
+  // ABS
+  add("ex_cable_crunch","Cable Crunch",["ABS"],false,"cable");
+  add("ex_hanging_knee","Hanging Knee Raise",["ABS"],false,"bodyweight");
+  add("ex_plank","Plank",["ABS","CORE"],true,"bodyweight");
+  add("ex_ab_wheel","Ab Wheel",["ABS","CORE"],true,"bodyweight");
+
   return E;
 }
 
 function seedState(){
   const exercises = seedExercises();
-  const days=[{id:"day_1",name:"Full Body A",index:0}];
+  const days=[
+    {id:"day_upper_a",name:"Upper A",index:0},
+    {id:"day_lower_a",name:"Lower A",index:1}
+  ];
   const slot=(dayId,order,exId,sets,repMin,repMax,targetRir,suggestedLoad)=>({id:uid("slot"),dayId,order,exId,sets,repMin,repMax,targetRir,repTarget:repMin,suggestedLoad});
-  const slots=[slot("day_1",0,"ex_bb_bench",3,8,12,2,45), slot("day_1",1,"ex_lat_pulldown",3,10,15,2,50)];
+  const slots=[
+    slot("day_upper_a",0,"ex_db_incline_press",3,8,12,2,50),
+    slot("day_upper_a",1,"ex_lat_pulldown",3,10,15,2,120),
+    slot("day_upper_a",2,"ex_lateral_raise",3,12,20,2,20),
+    slot("day_upper_a",3,"ex_pressdown",3,10,15,2,40),
+    slot("day_lower_a",0,"ex_leg_press",4,8,12,2,200),
+    slot("day_lower_a",1,"ex_leg_ext",3,12,20,2,100),
+    slot("day_lower_a",2,"ex_leg_curl_seated",3,10,15,2,80)
+  ];
   return { meta:{version:4,createdAt:Date.now()}, settings:{daysPerWeek:4,loadIncrement:2.5,autoFillFromSuggestion:true,backupFreqHours:24,backupKeep:14}, exercises, days, slots, sessions:[] };
 }
 
@@ -247,13 +323,12 @@ function render(){
   else if(r==="settings") v = viewSettings();
   $app.innerHTML = v;
 
-  // Active state for bottom nav
+  // Active state & Click Bindings
   document.querySelectorAll(".bnavbtn").forEach(b => {
     b.classList.toggle("active", b.dataset.nav === r || (b.dataset.nav === "workoutLast" && r === "workout"));
-    // FORCE ATTACH CLICK (Brute force fix for bottom buttons)
+    // FORCE CLICK (Bottom bar fix)
     b.onclick = (e) => {
-      e.preventDefault(); 
-      e.stopPropagation();
+      e.preventDefault(); e.stopPropagation();
       const n = b.dataset.nav;
       if(n === "workoutLast") navigate("workoutLast");
       else navigate(n);
@@ -270,8 +345,7 @@ document.addEventListener("click", e => {
   if(!btn) return;
   const ds = btn.dataset;
 
-  // 1. Navigation (Top nav & other buttons)
-  if(ds.nav) { e.preventDefault(); if(ds.nav==="workoutLast") navigate("workoutLast"); else navigate(ds.nav); return; }
+  // 1. Navigation (Top nav only, bottom is handled in render)
   if(ds.navto) { e.preventDefault(); if(ds.navto==="workoutLast") navigate("workoutLast"); else navigate(ds.navto); return; }
   if(ds.start) { e.preventDefault(); navigate("workout", {dayId: ds.start}); return; }
   if(ds.editDay) { e.preventDefault(); navigate("workout", {dayId: ds.editDay}); return; }
