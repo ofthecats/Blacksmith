@@ -1,5 +1,5 @@
-// BUILD: Blacksmith-v3-CLOSEST-FIX
-window.__BUILD_ID="Blacksmith-v3-CLOSEST-FIX";
+// BUILD: Blacksmith-v4-NAV-FIX
+window.__BUILD_ID="Blacksmith-v4-NAV-FIX";
 
 // --- UTILS ---
 function escapeHtml(str){ return String(str||"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#39;"); }
@@ -161,6 +161,14 @@ function viewLibrary(){
   </div>`;
 }
 
+function viewProgress(){
+  const recent=[...state.sessions].sort((a,b)=>b.startedAt-a.startedAt).slice(0,10);
+  return html`<div class="h1">Progress</div>
+    <div class="card">
+      ${recent.map(s=>`<div class="spread" style="padding:10px 0; border-top:1px solid var(--line)"><div>${s.date} • <b>${dayById(s.dayId)?.name}</b></div><span class="badge ${s.skipped?"warn":"ok"}">${s.skipped?"Skipped":s.logs.length+" sets"}</span></div>`).join("")}
+    </div>`;
+}
+
 function viewSettings(){
   return html`<div class="h1">Settings</div>
   <div class="grid two">
@@ -235,22 +243,28 @@ function render(){
   let v = viewHome();
   if(r==="workout") v = viewWorkout(route.params.dayId);
   else if(r==="library") v = viewLibrary();
+  else if(r==="progress") v = viewProgress();
   else if(r==="settings") v = viewSettings();
   $app.innerHTML = v;
+
+  // Active state for bottom nav
+  document.querySelectorAll(".bnavbtn").forEach(b => {
+    b.classList.toggle("active", b.dataset.nav === r || (b.dataset.nav === "workoutLast" && r === "workout"));
+  });
 }
 
 function navigate(name,params={}){ route={name,params}; render(); }
 function lastWorkedDayId(){ const s=[...state.sessions].sort((a,b)=>b.startedAt-a.startedAt)[0]; return s?.dayId||state.days[0]?.id; }
 
 // --- GLOBAL EVENT DELEGATION (CRITICAL FIX) ---
-// We use .closest() to ensure clicking <b>Text</b> inside a <button> still works
 document.addEventListener("click", e => {
   const btn = e.target.closest("button");
   if(!btn) return;
   const ds = btn.dataset;
 
-  // 1. Navigation
-  if(ds.navto) { e.preventDefault(); navigate(ds.navto); return; }
+  // 1. Navigation (Handles BOTH data-nav and data-navto)
+  if(ds.nav) { e.preventDefault(); if(ds.nav==="workoutLast") navigate("workoutLast"); else navigate(ds.nav); return; }
+  if(ds.navto) { e.preventDefault(); if(ds.navto==="workoutLast") navigate("workoutLast"); else navigate(ds.navto); return; }
   if(ds.start) { e.preventDefault(); navigate("workout", {dayId: ds.start}); return; }
   if(ds.editDay) { e.preventDefault(); navigate("workout", {dayId: ds.editDay}); return; }
   
