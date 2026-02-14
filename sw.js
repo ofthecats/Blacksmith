@@ -1,4 +1,4 @@
-const CACHE = "hypertrophy-coach-v4l-FIXED-NAV";
+const CACHE = "blacksmith-v10";
 const ASSETS = [
   "./",
   "./index.html",

@@ -1,6 +1,6 @@
 {
   "name": "Blacksmith",
-  "short_name": "Resistance",
+  "short_name": "Blacksmith",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#0f0f12",

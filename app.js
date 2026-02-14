@@ -29,8 +29,8 @@ function setStatus(msg){
 }
 
 // --- STATE MANAGEMENT ---
-const KEY = "hc_v4_state";
-const BACKUP_KEY = "hc_v4_backups";
+const KEY = "blacksmith_state";
+const BACKUP_KEY = "blacksmith_backups";
 
 function loadState(){ const raw=localStorage.getItem(KEY); if(!raw) return null; try{return JSON.parse(raw);}catch{return null;} }
 function saveState(s){ localStorage.setItem(KEY, JSON.stringify(s)); }
@@ -282,7 +282,7 @@ function viewProgress(){
   const recent=[...state.sessions].sort((a,b)=>b.startedAt-a.startedAt).slice(0,10);
   return html`<div class="h1">Progress</div>
     <div class="card">
-      ${recent.map(s=>`<div class="spread" style="padding:10px 0; border-top:1px solid var(--line)"><div>${s.date} • <b>${dayById(s.dayId)?.name}</b></div><span class="badge ${s.skipped?"warn":"ok"}">${s.skipped?"Skipped":s.logs.length+" sets"}</span></div>`).join("")}
+      ${recent.map(s=>`<div class="spread" style="padding:10px 0; border-top:1px solid var(--line)"><div>${s.date} • <b>${dayById(s.dayId)?.name || "(Deleted)"}</b></div><span class="badge ${s.skipped?"warn":"ok"}">${s.skipped?"Skipped":(s.logs?.length || 0)+" sets"}</span></div>`).join("")}
     </div>`;
 }
 
@@ -403,6 +403,9 @@ function render(){
       b.classList.toggle("active", b.dataset.nav === r || (b.dataset.nav === "workoutLast" && r === "workout"));
       b.onclick = (e) => { e.preventDefault(); e.stopPropagation(); const n = b.dataset.nav; if(n === "workoutLast") navigate("workoutLast"); else navigate(n); };
     });
+    document.querySelectorAll(".navbtn").forEach(b => {
+      b.onclick = (e) => { e.preventDefault(); e.stopPropagation(); navigate(b.dataset.nav); };
+    });
   } catch (err) {
     setStatus("RENDER ERROR: " + err.message);
     console.error(err);
@@ -460,7 +463,7 @@ function handleAction(action, data){
   if(action==="add-custom-ex"){
     const name=document.getElementById("custName").value; 
     const muscles=Array.from(document.querySelectorAll('input[name="custMuscle"]:checked')).map(c=>c.value);
-    if(name&&muscles.length){ state.exercises.push({id:uid("ex"),name,muscles,custom:true}); saveState(state); render(); }
+    if(name&&muscles.length){ state.exercises.push({id:uid("ex"),name,muscles,compound:false,equipment:"other",custom:true}); saveState(state); render(); }
   }
   if(action==="save-slot-default"){
     const slot=state.slots.find(s=>s.id===data.slotid); const draft=window.__workoutUI.setDrafts[data.slotid];
@@ -487,7 +490,7 @@ function handleAction(action, data){
   }
 
   if(action==="finish-adjust"){
-    const ui=window.__workoutUI; const dayId=route.params.dayId; const logs=[];
+    const ui=window.__workoutUI; const dayId=route.params.dayId || lastWorkedDayId(); const logs=[];
     Object.keys(ui.setDrafts).forEach(sid=>{
       if(ui.skips[sid]) return;
       ui.setDrafts[sid].sets.forEach((s,i)=>{ if(s.done) logs.push({slotId:sid,setIndex:i+1,weight:Number(s.weight),reps:Number(s.reps),achievedRir:Number(s.rir)}); });
@@ -502,7 +505,8 @@ function handleAction(action, data){
   if(action==="close-skip-session"){ window.__workoutUI.showSkipSessionModal = false; render(); }
   if(action==="do-skip-session"){
     const ui=window.__workoutUI;
-    state.sessions.push({id:uid("sess"), date:nowISODate(), dayId:route.params.dayId, skipped:true, skipReason:data.reason});
+    const dayId = route.params.dayId || lastWorkedDayId();
+    state.sessions.push({id:uid("sess"), date:nowISODate(), dayId, skipped:true, skipReason:data.reason});
     saveState(state); makeAutoBackup("auto"); window.__workoutUI=null; navigate("home");
   }
 
