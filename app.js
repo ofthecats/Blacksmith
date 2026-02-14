@@ -314,7 +314,7 @@ function setRow(slot,idx,s){
   </div>`;
 }
 
-function exerciseCard(slot,ui){
+function exerciseCard(slot, ui, slotIndex, totalSlots){
   const ex=exById(slot.exId); 
   const draft=ui.setDrafts[slot.id]; 
   const isSkipped = ui.skips[slot.id];
@@ -326,6 +326,9 @@ function exerciseCard(slot,ui){
     .filter(e => e.id !== slot.exId && (e.muscles||[]).some(m => (ex.muscles||[]).includes(m)))
     .sort((a,b) => a.name.localeCompare(b.name));
 
+  const canMoveUp = slotIndex > 0;
+  const canMoveDown = slotIndex < totalSlots - 1;
+
   return html`<div class="exerciseCard" style="margin-bottom:12px; border:${isSkipped?'1px solid var(--warn)':'1px solid var(--line)'}">
     <div class="spread exHeader" data-toggle="${slot.id}" style="cursor:pointer; padding-bottom:8px">
       <div>
@@ -333,7 +336,12 @@ function exerciseCard(slot,ui){
         <b>${escapeHtml(ex.name)}</b> 
         ${isSkipped?'(SKIPPED)':''}
       </div>
-      <div class="row"><span class="badge">${slot.sets}×${slot.repTarget}</span><span class="badge accent">Rec: ${fmt(slot.suggestedLoad)}</span></div>
+      <div class="row">
+        <span class="badge">${slot.sets}×${slot.repTarget}</span>
+        <span class="badge accent">Rec: ${fmt(slot.suggestedLoad)}</span>
+        <button class="btn secondary btn-sm" data-move-up="${slot.id}" ${canMoveUp ? '' : 'disabled'} onclick="event.stopPropagation()">▲</button>
+        <button class="btn secondary btn-sm" data-move-down="${slot.id}" ${canMoveDown ? '' : 'disabled'} onclick="event.stopPropagation()">▼</button>
+      </div>
     </div>
     <div class="exBody" style="${isCollapsed ? 'display:none' : 'display:block'}">
       <hr style="opacity:0.3; margin: 8px 0" />
@@ -403,7 +411,7 @@ function viewWorkout(dayId){
       </div>
     ` : ""}
     ${slots.length === 0 ? `<div style="padding:40px 20px; text-align:center; opacity:0.6; border: 1px dashed var(--line); margin-top:20px; border-radius:12px;">No exercises here yet.<br><br>Click <b>Add Exercise</b> above to start building.</div>` : ""}
-    ${slots.map(s=>exerciseCard(s,ui)).join("")}
+    ${slots.map((s, idx) => exerciseCard(s, ui, idx, slots.length)).join("")}
   </div>
   ${ui.showSkipSessionModal ? `<div class="modal"><div class="h2">Skip Session Reason</div>${SKIP_REASONS.map(r=>`<button class="btn secondary" data-action="do-skip-session" data-reason="${r}">${r}</button>`).join("")}<button class="btn" data-action="close-skip-session" style="margin-top:10px">Cancel</button></div>`:""}`;
 }
@@ -501,6 +509,44 @@ document.addEventListener("click", e => {
         delete ui.collapsed[slotId];
         setStatus("Exercise removed.");
         render();
+      }
+      return;
+    }
+    
+    // Move exercise up
+    if(ds.moveUp) {
+      const slotId = ds.moveUp;
+      const slot = state.slots.find(s => s.id === slotId);
+      if(slot) {
+        const daySlots = state.slots.filter(s => s.dayId === slot.dayId).sort((a,b) => a.order - b.order);
+        const idx = daySlots.findIndex(s => s.id === slotId);
+        if(idx > 0) {
+          const prevSlot = daySlots[idx - 1];
+          const tempOrder = slot.order;
+          slot.order = prevSlot.order;
+          prevSlot.order = tempOrder;
+          saveState(state);
+          render();
+        }
+      }
+      return;
+    }
+    
+    // Move exercise down
+    if(ds.moveDown) {
+      const slotId = ds.moveDown;
+      const slot = state.slots.find(s => s.id === slotId);
+      if(slot) {
+        const daySlots = state.slots.filter(s => s.dayId === slot.dayId).sort((a,b) => a.order - b.order);
+        const idx = daySlots.findIndex(s => s.id === slotId);
+        if(idx < daySlots.length - 1) {
+          const nextSlot = daySlots[idx + 1];
+          const tempOrder = slot.order;
+          slot.order = nextSlot.order;
+          nextSlot.order = tempOrder;
+          saveState(state);
+          render();
+        }
       }
       return;
     }

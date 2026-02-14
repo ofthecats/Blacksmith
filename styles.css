@@ -68,3 +68,5 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 12px 0; }
 .status { position: fixed; bottom: 0; left: 0; right: 0; padding: 10px 14px; background: var(--card); border-top: 1px solid var(--line); color: var(--muted); font-size: 12px; text-align: center; z-index: 100; display: none; }
 .modal { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 16px; margin-top: 12px; display: flex; flex-direction: column; gap: 8px; }
 .btn.warn { background: var(--warn); color: #0b0b0e; }
+.btn-sm { padding: 4px 8px; font-size: 12px; min-width: 28px; }
+.btn-sm:disabled { opacity: 0.3; cursor: not-allowed; }
