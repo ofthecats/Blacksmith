@@ -1,5 +1,5 @@
-// BUILD: Blacksmith-v10-FULL-TEMPLATES
-window.__BUILD_ID="v10.0";
+// BUILD: Blacksmith-v11-SWAP-REMOVE
+window.__BUILD_ID="v11.0";
 
 // --- ERROR HANDLING ---
 window.onerror = function(msg, source, lineno, colno, error) {
@@ -68,7 +68,6 @@ const SKIP_REASONS = ["Fatigue", "Pain/Injury", "Time/Scheduling", "Equipment Bu
 function seedExercises(){
   const E=[];
   const add=(id,name,muscles,compound,equipment,custom=false)=>E.push({id,name,muscles,compound,equipment,custom});
-  
   // CHEST
   add("ex_bb_bench","Bench Press (Barbell)",["CHEST","TRICEPS","DELTS"],true,"barbell");
   add("ex_bb_incline_bench","Incline Bench Press (Barbell)",["CHEST","TRICEPS","DELTS"],true,"barbell");
@@ -82,7 +81,6 @@ function seedExercises(){
   add("ex_pec_deck","Pec Deck",["CHEST"],false,"machine");
   add("ex_pushup","Push-up",["CHEST","TRICEPS","DELTS"],true,"bodyweight");
   add("ex_dips","Dips (Assisted/Bodyweight)",["CHEST","TRICEPS"],true,"bodyweight");
-
   // BACK
   add("ex_pullup","Pull-up",["BACK","BICEPS"],true,"bodyweight");
   add("ex_chinup","Chin-up",["BACK","BICEPS"],true,"bodyweight");
@@ -96,7 +94,6 @@ function seedExercises(){
   add("ex_chest_supp_row","Chest-Supported Row",["BACK","BICEPS"],true,"machine");
   add("ex_facepull","Face Pull",["DELTS","TRAPS","BACK"],false,"cable");
   add("ex_shrug_db","Shrug (DB)",["TRAPS"],false,"dumbbell");
-
   // SHOULDERS
   add("ex_ohp_bb","Overhead Press (Barbell)",["DELTS","TRICEPS"],true,"barbell");
   add("ex_ohp_db","Overhead Press (Dumbbell)",["DELTS","TRICEPS"],true,"dumbbell");
@@ -105,7 +102,6 @@ function seedExercises(){
   add("ex_cable_lateral","Cable Lateral Raise",["DELTS"],false,"cable");
   add("ex_rear_delt_fly","Rear Delt Fly (Machine)",["DELTS"],false,"machine");
   add("ex_rear_delt_db","Rear Delt Fly (Dumbbell)",["DELTS"],false,"dumbbell");
-
   // ARMS
   add("ex_pressdown","Triceps Pressdown",["TRICEPS"],false,"cable");
   add("ex_oh_tri","Overhead Triceps Ext (Cable)",["TRICEPS"],false,"cable");
@@ -116,7 +112,6 @@ function seedExercises(){
   add("ex_hammer_curl","Hammer Curl",["BICEPS","FOREARMS"],false,"dumbbell");
   add("ex_cable_curl","Cable Curl",["BICEPS"],false,"cable");
   add("ex_preacher_curl","Preacher Curl",["BICEPS"],false,"machine");
-
   // LEGS
   add("ex_back_squat","Back Squat (Barbell)",["QUADS","GLUTES"],true,"barbell");
   add("ex_front_squat","Front Squat (Barbell)",["QUADS","GLUTES"],true,"barbell");
@@ -131,13 +126,11 @@ function seedExercises(){
   add("ex_leg_curl_lying","Leg Curl (Lying)",["HAMSTRINGS"],false,"machine");
   add("ex_calf_standing","Calf Raise (Standing)",["CALVES"],false,"machine");
   add("ex_calf_seated","Calf Raise (Seated)",["CALVES"],false,"machine");
-
   // ABS
   add("ex_cable_crunch","Cable Crunch",["ABS"],false,"cable");
   add("ex_hanging_knee","Hanging Knee Raise",["ABS"],false,"bodyweight");
   add("ex_plank","Plank",["ABS","CORE"],true,"bodyweight");
   add("ex_ab_wheel","Ab Wheel",["ABS","CORE"],true,"bodyweight");
-
   return E;
 }
 
@@ -151,33 +144,26 @@ function seedState(){
   ];
   const slot=(dayId,order,exId,sets,repMin,repMax,targetRir,suggestedLoad)=>({id:uid("slot"),dayId,order,exId,sets,repMin,repMax,targetRir,repTarget:repMin,suggestedLoad});
   const slots=[
-    // Upper A
     slot("day_upper_a",0,"ex_db_incline_press",3,8,12,2,50),
-    slot("day_upper_a",1,"ex_cable_fly",3,12,20,2,25),
-    slot("day_upper_a",2,"ex_lateral_raise",3,12,20,2,20),
-    slot("day_upper_a",3,"ex_pressdown",3,10,15,2,40),
-    slot("day_upper_a",4,"ex_chest_supp_row",3,8,12,2,80),
-    
-    // Lower A
-    slot("day_lower_a",0,"ex_leg_press",4,8,12,2,200),
-    slot("day_lower_a",1,"ex_leg_ext",3,12,20,2,100),
-    slot("day_lower_a",2,"ex_leg_curl_seated",3,10,15,2,80),
-    slot("day_lower_a",3,"ex_calf_standing",4,10,15,2,120),
+    slot("day_upper_a",1,"ex_cable_fly",3,12,20,2,30),
+    slot("day_upper_a",2,"ex_lateral_raise",3,12,20,2,15),
+    slot("day_upper_a",3,"ex_pressdown",3,10,15,2,35),
+    slot("day_upper_a",4,"ex_cs_row",2,8,12,2,60),
+    slot("day_lower_a",0,"ex_leg_press",4,8,12,2,180),
+    slot("day_lower_a",1,"ex_leg_ext",3,12,20,2,80),
+    slot("day_lower_a",2,"ex_leg_curl_seated",3,10,15,2,70),
+    slot("day_lower_a",3,"ex_calf_standing",4,10,15,2,90),
     slot("day_lower_a",4,"ex_cable_crunch",3,12,20,2,60),
-
-    // Upper B
-    slot("day_upper_b",0,"ex_lat_pulldown",3,10,15,2,120),
-    slot("day_upper_b",1,"ex_chest_supp_row",3,8,12,2,80),
-    slot("day_upper_b",2,"ex_rear_delt_fly",3,15,20,2,70),
-    slot("day_upper_b",3,"ex_ez_curl",3,10,15,2,50),
-    slot("day_upper_b",4,"ex_oh_tri",3,10,15,2,40),
-
-    // Lower B
+    slot("day_upper_b",0,"ex_cs_row",3,8,12,2,60),
+    slot("day_upper_b",1,"ex_lat_pulldown",3,8,12,2,120),
+    slot("day_upper_b",2,"ex_rear_delt_fly",3,12,20,2,25),
+    slot("day_upper_b",3,"ex_ez_curl",3,10,15,2,55),
+    slot("day_upper_b",4,"ex_oh_tri",3,10,15,2,45),
     slot("day_lower_b",0,"ex_rdl_bb",3,8,12,2,135),
-    slot("day_lower_b",1,"ex_leg_curl_lying",3,10,15,2,80),
-    slot("day_lower_b",2,"ex_split_squat",3,8,12,2,40),
-    slot("day_lower_b",3,"ex_calf_seated",4,10,15,2,80),
-    slot("day_lower_b",4,"ex_cable_crunch",3,12,20,2,60)
+    slot("day_lower_b",1,"ex_leg_curl_lying",3,10,15,2,70),
+    slot("day_lower_b",2,"ex_split_squat",3,8,12,2,80),
+    slot("day_lower_b",3,"ex_calf_seated",4,10,15,2,90),
+    slot("day_lower_b",4,"ex_cable_crunch",3,12,20,2,60),
   ];
   return { meta:{version:4,createdAt:Date.now()}, settings:{daysPerWeek:4,loadIncrement:2.5,autoFillFromSuggestion:true,backupFreqHours:24,backupKeep:14}, exercises, days, slots, sessions:[] };
 }
@@ -319,6 +305,9 @@ function exerciseCard(slot,ui){
   const draft=ui.setDrafts[slot.id]; 
   const isSkipped = ui.skips[slot.id];
   const isCollapsed = ui.collapsed[slot.id];
+  
+  // Create list of all exercises for swap dropdown
+  const allEx = state.exercises.sort((a,b)=>a.name.localeCompare(b.name));
 
   return html`<div class="exerciseCard" style="margin-bottom:12px; border:${isSkipped?'1px solid var(--warn)':'1px solid var(--line)'}">
     <div class="spread exHeader" data-toggle="${slot.id}" style="cursor:pointer; padding-bottom:8px">
@@ -331,13 +320,29 @@ function exerciseCard(slot,ui){
     </div>
     <div class="exBody" style="${isCollapsed ? 'display:none' : 'display:block'}">
       <hr style="opacity:0.3; margin: 8px 0" />
+      
       ${isSkipped ? `<button class="btn" data-undo-skip="${slot.id}">Undo Skip</button>` : `
+      
+      <div class="kv" style="margin-bottom:10px; border-bottom:1px solid var(--line); padding-bottom:10px">
+        <div>
+          <label>Swap Exercise</label>
+          <select class="select" data-swap="${slot.id}">
+            ${allEx.map(e=>`<option value="${e.id}" ${e.id===ex.id?'selected':''}>${escapeHtml(e.name)}</option>`).join("")}
+          </select>
+        </div>
+        <div>
+          <label>&nbsp;</label>
+          <button class="btn danger" style="width:100%" data-del-slot="${slot.id}">Remove</button>
+        </div>
+      </div>
+
       <div class="row" style="margin-top:10px">
         <button class="btn secondary" data-addset="${slot.id}">Add Set</button>
         <button class="btn ok" data-action="save-slot-default" data-slotid="${slot.id}">Save Default</button>
         <button class="btn warn" data-open-skip="${slot.id}">Skip</button>
       </div>
       <div style="margin-top:12px">${draft.sets.map((s,idx)=>setRow(slot,idx,s)).join("")}</div>`}
+      
       ${ui.skipModalFor === slot.id ? `<div class="modal"><div class="h2">Reason?</div>${SKIP_REASONS.map(r=>`<button class="btn secondary" data-confirm-skip="${slot.id}" data-reason="${r}">${r}</button>`).join("")}</div>` : ""}
     </div>
   </div>`;
@@ -417,6 +422,7 @@ function lastWorkedDayId(){ const s=[...state.sessions].sort((a,b)=>b.startedAt-
 
 // --- DELEGATION ---
 document.addEventListener("click", e => {
+  // Toggle Header
   const toggle = e.target.closest("[data-toggle]");
   if(toggle) {
     const id = toggle.dataset.toggle;
@@ -429,12 +435,14 @@ document.addEventListener("click", e => {
   if(!btn) return;
   const ds = btn.dataset;
 
+  // Nav
   if(ds.navto) { e.preventDefault(); if(ds.navto==="workoutLast") navigate("workoutLast"); else navigate(ds.navto); return; }
   if(ds.start) { e.preventDefault(); navigate("workout", {dayId: ds.start}); return; }
   if(ds.editDay) { e.preventDefault(); navigate("workout", {dayId: ds.editDay}); return; }
   
   if(ds.action) { e.preventDefault(); handleAction(ds.action, ds); return; }
 
+  // Workout Interactions
   const ui = window.__workoutUI;
   if(ui) {
     if(ds.markdone) { ui.setDrafts[ds.markdone].sets[ds.idx].done = !ui.setDrafts[ds.markdone].sets[ds.idx].done; render(); return; }
@@ -444,12 +452,25 @@ document.addEventListener("click", e => {
     if(ds.confirmSkip) { ui.skips[ds.confirmSkip] = {reason: ds.reason}; ui.skipModalFor = null; render(); return; }
     if(ds.undoSkip) { delete ui.skips[ds.undoSkip]; render(); return; }
     if(ds.saveSlotDefault) { handleAction("save-slot-default", ds); return; }
+    
+    // Remove Slot from Workout
+    if(ds.delSlot) {
+      if(confirm("Remove this exercise from the workout?")) {
+        state.slots = state.slots.filter(s=>s.id !== ds.delSlot);
+        delete ui.setDrafts[ds.delSlot]; // Clean up UI state
+        saveState(state);
+        render();
+      }
+      return;
+    }
   }
 
+  // Deletions
   if(ds.delEx) { if(confirm("Delete custom exercise?")) { state.exercises = state.exercises.filter(x=>x.id!==ds.delEx); saveState(state); render(); } return; }
   if(ds.delDay) { if(confirm("Delete workout?")) { state.days = state.days.filter(x=>x.id!==ds.delDay); state.slots=state.slots.filter(s=>s.dayId!==ds.delDay); saveState(state); render(); } return; }
 });
 
+// Inputs
 document.addEventListener("input", e => {
   const ds = e.target.dataset;
   const ui = window.__workoutUI;
@@ -458,12 +479,25 @@ document.addEventListener("input", e => {
   }
 });
 
+// Swap Logic (Change Event)
+document.addEventListener("change", e => {
+  const ds = e.target.dataset;
+  if(ds.swap) {
+    const slot = state.slots.find(s=>s.id===ds.swap);
+    if(slot) {
+      slot.exId = e.target.value;
+      saveState(state);
+      render();
+    }
+  }
+});
+
 
 function handleAction(action, data){
   if(action==="add-custom-ex"){
     const name=document.getElementById("custName").value; 
     const muscles=Array.from(document.querySelectorAll('input[name="custMuscle"]:checked')).map(c=>c.value);
-    if(name&&muscles.length){ state.exercises.push({id:uid("ex"),name,muscles,compound:false,equipment:"other",custom:true}); saveState(state); render(); }
+    if(name&&muscles.length){ state.exercises.push({id:uid("ex"),name,muscles,custom:true}); saveState(state); render(); }
   }
   if(action==="save-slot-default"){
     const slot=state.slots.find(s=>s.id===data.slotid); const draft=window.__workoutUI.setDrafts[data.slotid];
